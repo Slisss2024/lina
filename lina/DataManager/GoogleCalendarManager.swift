@@ -12,14 +12,14 @@ import GoogleAPIClientForREST_Calendar
 
 class GoogleCalendarManager: ObservableObject {
     @Published var isSignedIn = false
-    @Published var events: [GTLRCalendar_Event] = []
+    @Published var events: [CalendarEvent] = []
+    @Published var groupedEvents: [DayEvents] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
     private let calendarService = GTLRCalendarService()
     
     init() {
-        // Check if user is already signed in
         if let user = GIDSignIn.sharedInstance.currentUser {
             isSignedIn = true
             configureCalendarService(user: user)
@@ -60,6 +60,7 @@ class GoogleCalendarManager: ObservableObject {
         GIDSignIn.sharedInstance.signOut()
         isSignedIn = false
         events = []
+        groupedEvents = []
         calendarService.authorizer = nil
     }
     
@@ -74,7 +75,7 @@ class GoogleCalendarManager: ObservableObject {
         errorMessage = nil
         
         let query = GTLRCalendarQuery_EventsList.query(withCalendarId: "primary")
-        query.maxResults = 50
+        query.maxResults = 100
         query.timeMin = GTLRDateTime(date: Date())
         query.singleEvents = true
         query.orderBy = kGTLRCalendarOrderByStartTime
@@ -90,11 +91,13 @@ class GoogleCalendarManager: ObservableObject {
                 
                 guard let eventList = result as? GTLRCalendar_Events,
                       let items = eventList.items else {
-                    self?.errorMessage = K.Empty.noEventsFound
+                    self?.errorMessage = "No events found"
                     return
                 }
                 
-                self?.events = items
+                // Convert to CalendarEvent and group by date
+                self?.events = items.map { CalendarEvent(from: $0) }
+                self?.groupedEvents = EventGroupManager.groupEventsByDate(self?.events ?? [])
             }
         }
     }

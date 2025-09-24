@@ -7,7 +7,6 @@
 
 
 import SwiftUI
-import GoogleAPIClientForREST_Calendar
 
 struct GoogleEventsView: View {
     @ObservedObject var manager: GoogleCalendarManager
@@ -15,10 +14,16 @@ struct GoogleEventsView: View {
     
     var body: some View {
         NavigationView {
-            List(manager.events, id: \.identifier) { event in
-                EventRow(event: event)
+            List {
+                ForEach(manager.groupedEvents, id: \.date) { dayEvents in
+                    Section(header: DaySectionHeader(dayEvents: dayEvents)) {
+                        ForEach(dayEvents.events, id: \.id) { event in
+                            EventRow(event: event)
+                        }
+                    }
+                }
             }
-            .navigationTitle("Google Calendar Events")
+            .navigationTitle("Google Calendar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -41,21 +46,49 @@ struct GoogleEventsView: View {
     }
 }
 
+struct DaySectionHeader: View {
+    let dayEvents: DayEvents
+    
+    var body: some View {
+        HStack {
+            Text(dayEvents.displayTitle)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            Spacer()
+            
+            Text("\(dayEvents.events.count) event\(dayEvents.events.count == 1 ? "" : "s")")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
 struct EventRow: View {
-    let event: GTLRCalendar_Event
+    let event: CalendarEvent
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(event.summary ?? "No Title")
+            Text(event.title)
                 .font(.headline)
             
-            if let start = event.start?.dateTime?.date ?? event.start?.date?.date {
-                Text(DateFormatter.eventFormatter.string(from: start))
+            HStack {
+                Text(timeText)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                
+                if event.isAllDay {
+                    Text("All day")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.2))
+                        .foregroundColor(.blue)
+                        .cornerRadius(4)
+                }
             }
             
-            if let description = event.descriptionProperty, !description.isEmpty {
+            if let description = event.description, !description.isEmpty {
                 Text(description)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -64,13 +97,22 @@ struct EventRow: View {
         }
         .padding(.vertical, 2)
     }
-}
-
-extension DateFormatter {
-    static let eventFormatter: DateFormatter = {
+    
+    private var timeText: String {
+        if event.isAllDay {
+            return "All day"
+        }
+        
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return formatter
-    }()
+        
+        let startTime = formatter.string(from: event.startDate)
+        
+        if let endDate = event.endDate {
+            let endTime = formatter.string(from: endDate)
+            return "\(startTime) - \(endTime)"
+        }
+        
+        return startTime
+    }
 }

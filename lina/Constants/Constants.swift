@@ -6,7 +6,7 @@
 //
 
 enum K {
-    static let appName = "DayBrief"
+    static let appName = "DayLens"
     static let wsTitle = "Connect your calendars to view all your meetings in one place"
     static let wsCaption = "You can connect multiple calendars"
     
