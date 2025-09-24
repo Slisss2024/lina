@@ -13,4 +13,8 @@ enum K {
     static let connectGoogleCalendar = "Connect Google Calendar"
     static let connectOutlookCalendar = "Connect Outlook Calendar"
     static let connectAppleCalendar = "Connect Apple Calendar"
+    
+    enum Empty {
+        static let noEventsFound = "No events found"
+    }
 }

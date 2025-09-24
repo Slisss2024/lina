@@ -8,14 +8,21 @@
 import SwiftUI
 
 struct WSConnectButtonsView: View {
+    @StateObject private var googleCalendarManager = GoogleCalendarManager()
+    @State private var showingGoogleEvents = false
+    
     var body: some View {
         VStack(spacing: 16) {
             CalendarConnectionButton(
-                title: K.connectGoogleCalendar,
+                title: googleCalendarManager.isSignedIn ? "View Google Calendar Events" : K.connectGoogleCalendar,
                 iconName: "globe",
                 color: .green
             ) {
-                print("Connect Google Calendar tapped")
+                if googleCalendarManager.isSignedIn {
+                    showingGoogleEvents = true
+                } else {
+                    googleCalendarManager.signIn()
+                }
             }
             
             CalendarConnectionButton(
@@ -33,8 +40,24 @@ struct WSConnectButtonsView: View {
             ) {
                 print("Connect Apple Calendar tapped")
             }
+            
+            // Show loading state
+            if googleCalendarManager.isLoading {
+                ProgressView("Loading...")
+                    .padding()
+            }
+            
+            // Show error message
+            if let errorMessage = googleCalendarManager.errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
         }
         .padding(.horizontal, 30)
+        .sheet(isPresented: $showingGoogleEvents) {
+            GoogleEventsView(manager: googleCalendarManager)
+        }
     }
 }
 
