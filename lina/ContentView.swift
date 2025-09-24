@@ -9,16 +9,19 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationView {
+            VStack(spacing: 30) {
+                WSHeaderView()
+                
+                Spacer()
+                
+                WSConnectButtonsView()
+                
+                Spacer()
+                
+                WSFooterView()
+            }
+            .navigationBarHidden(true)
         }
-        .padding()
     }
-}
-
-#Preview {
-    ContentView()
 }
